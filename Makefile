@@ -1,0 +1,2 @@
+format:
+	gofumpt -w *.go

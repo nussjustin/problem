@@ -1,0 +1,57 @@
+issues:
+  exclude-files:
+    - '_test.go$'
+linters:
+  enable:
+    # Default linters, specified for clarity
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # Custom linters
+    - asasalint
+    - bodyclose
+    - contextcheck
+    - dupl
+    - dupword
+    - durationcheck
+    - errchkjson
+    - exhaustive
+    - gci
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - goconst
+    - godot
+    - gofumpt
+    - gosec
+    - gosmopolitan
+    - loggercheck
+    - makezero
+    - misspell
+    - mnd
+    - musttag
+    - nilerr
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - prealloc
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - tagalign
+    - tagliatelle
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - wastedassign
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/nussjustin/problem)
+      - blank
+      - dot

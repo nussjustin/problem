@@ -1,0 +1,17 @@
+on: [push, pull_request]
+name: Lint
+jobs:
+  lint:
+    strategy:
+      matrix:
+        go-version: [1.23.x]
+        platform: [ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Lint
+        run: |
+          go run github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2 run
