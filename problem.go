@@ -16,8 +16,6 @@ import (
 const (
 	// AboutBlankTypeURI is the default problem type and is equivalent to not specifying a problem type.
 	//
-	// The [ForStatus] function can be used to create a problem with this type from just an HTTP status.
-	//
 	// See also https://datatracker.ietf.org/doc/html/rfc9457#name-aboutblank
 	AboutBlankTypeURI = "about:blank"
 )
