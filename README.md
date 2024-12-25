@@ -93,6 +93,25 @@ if outOfCredit {
 }
 ```
 
+### Recovering from panics
+
+The [Handler][4] function wraps an existing [http.Handler][2] and automatically recovers any panics and responds to the
+request with JSON-encoded problem details.
+
+Example:
+
+```go
+func main() {
+    mux := http.NewServeMux()
+    mux.HandleFunc("/", myHandler)
+
+    // Wrap the handler to handle panics
+    handler := problem.Handler(mux)
+
+    log.Fatal(http.ListenAndServe(":8000", handler))
+}
+```
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
@@ -105,3 +124,4 @@ Please make sure to update tests as appropriate.
 [1]: https://pkg.go.dev/github.com/nussjustin/problem#New
 [2]: https://pkg.go.dev/net/http#Handler
 [3]: https://pkg.go.dev/github.com/nussjustin/problem#Details
+[4]: https://pkg.go.dev/github.com/nussjustin/problem#Handler
