@@ -131,6 +131,13 @@ func New(typ string, title string, status int, opts ...Option) *Details {
 	return p
 }
 
+var _ error = (*Details)(nil)
+
+// Error implements the error interface. The returned value is the same as d.Title.
+func (d *Details) Error() string {
+	return d.Title
+}
+
 // MarshalJSON implements the json.MarshalerV1 interface.
 //
 // See MarshalJSONV2 for details.
