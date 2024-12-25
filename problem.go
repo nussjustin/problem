@@ -213,19 +213,17 @@ func (d *Details) MarshalJSONV2(enc *jsontext.Encoder, opts json.Options) error 
 		}
 	}
 
-	if len(d.Extensions) != 0 {
-		for k, v := range d.Extensions {
-			if k == "type" || k == "status" || k == "title" || k == "detail" || k == "instance" {
-				continue
-			}
+	for k, v := range d.Extensions {
+		if k == "type" || k == "status" || k == "title" || k == "detail" || k == "instance" {
+			continue
+		}
 
-			if err := enc.WriteToken(jsontext.String(k)); err != nil {
-				return err
-			}
+		if err := enc.WriteToken(jsontext.String(k)); err != nil {
+			return err
+		}
 
-			if err := json.MarshalEncode(enc, v, opts); err != nil {
-				return err
-			}
+		if err := json.MarshalEncode(enc, v, opts); err != nil {
+			return err
 		}
 	}
 
