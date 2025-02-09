@@ -49,11 +49,11 @@ Example:
 type (s *MyServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     // ...
     if outOfCredit {
-        &problem.Type{
+        (&problem.Details{
             Type:     "https://example.com/probs/out-of-credit",
             Title:    "You do not have enough credit.",
             Status:   http.StatusForbidden,
-        }.ServeHTTP(w, r)
+        }).ServeHTTP(w, r)
         return
     }
     // ...

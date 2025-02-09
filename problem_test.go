@@ -441,38 +441,3 @@ func TestType_Details(t *testing.T) {
 		t.Errorf("Type.Details() mismatch (-want +got):\n%s", diff)
 	}
 }
-
-func TestType_ServeHTTP(t *testing.T) {
-	r := httptest.NewRequest("GET", "/account/12345/msgs/abc", nil)
-
-	rec := httptest.NewRecorder()
-
-	(&problem.Type{
-		URI:    "https://example.com/probs/out-of-credit",
-		Title:  "You do not have enough credit.",
-		Status: http.StatusForbidden,
-		Extensions: map[string]any{
-			"currency":  "EUR",
-			"overdraft": false,
-		},
-	}).Details(
-		problem.WithStatus(http.StatusTeapot),
-		problem.WithDetail("Your current balance is 30, but that costs 50."),
-		problem.WithInstance("/account/12345/msgs/abc"),
-		problem.WithExtension("balance", 30),
-		problem.WithExtension("accounts", []string{"/account/12345", "/account/67890"}),
-		problem.WithExtension("currency", "USD"),
-	).ServeHTTP(rec, r)
-
-	assertResponse(t, rec, http.StatusTeapot, `{
-		"type": "https://example.com/probs/out-of-credit",
-		"title": "You do not have enough credit.",
-		"status": 418,
-		"detail": "Your current balance is 30, but that costs 50.",
-		"instance": "/account/12345/msgs/abc",
-		"balance": 30,
-		"accounts": ["/account/12345", "/account/67890"],
-		"currency": "USD",
-		"overdraft": false
-	}`)
-}

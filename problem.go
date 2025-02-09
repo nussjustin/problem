@@ -347,13 +347,13 @@ func (d *Details) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 //	type (s *MyServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //		// ...
 //		if outOfCredit {
-//			OutOfCreditProblemType.ServeHTTP(w, r)
+//			OutOfCreditProblemType.Details().ServeHTTP(w, r)
 //			return
 //		}
 //		// ...
 //	}
 //
-// When available, extra information can be added like this:
+// When available, extra information can be added using [Option]s:
 //
 //	if outOfCredit {
 //		OutOfCreditProblemType.Details(
@@ -402,9 +402,4 @@ func (t *Type) Details(opts ...Option) *Details {
 	}
 
 	return d
-}
-
-// This is a shorthand for p.Details().ServeHTTP(w, r).
-func (t *Type) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t.Details().ServeHTTP(w, r)
 }
