@@ -2,6 +2,7 @@ package problem_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -26,6 +27,12 @@ type panicMarshaler struct{}
 
 func (panicMarshaler) MarshalJSON() ([]byte, error) {
 	panic("MarshalJSON called")
+}
+
+type testError struct{}
+
+func (testError) Error() string {
+	return ""
 }
 
 func assertJSON(tb testing.TB, want string, got []byte) {
@@ -90,6 +97,7 @@ func TestDetails_New(t *testing.T) {
 				problem.WithInstance("/account/12345/msgs/abc"),
 				problem.WithExtension("balance", 30),
 				problem.WithExtension("accounts", []string{"/account/12345", "/account/67890"}),
+				problem.WithUnderlying(testError{}),
 			},
 			Expected: problem.Details{
 				Type:     "https://example.com/probs/out-of-credit",
@@ -101,6 +109,7 @@ func TestDetails_New(t *testing.T) {
 					"balance":  30,
 					"accounts": []string{"/account/12345", "/account/67890"},
 				},
+				Underlying: testError{},
 			},
 		},
 		{
@@ -137,6 +146,22 @@ func TestDetails_New(t *testing.T) {
 				t.Errorf("problem.New() mismatch (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestDetails_Unwrap(t *testing.T) {
+	d := &problem.Details{
+		Underlying: testError{},
+	}
+
+	got, want := d.Unwrap(), testError{}
+
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("Details.Unwrap() mismatch (-want +got):\n%s", diff)
+	}
+
+	if !errors.Is(d, testError{}) {
+		t.Errorf("errors.Is() returned false, want true")
 	}
 }
 

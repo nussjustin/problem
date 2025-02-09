@@ -28,6 +28,8 @@ const (
 )
 
 // Details defines an RFC 9457 problem details object.
+//
+// Details also implements the [error] interface and can optionally wrap an existing [error] value.
 type Details struct {
 	// Type contains the problem type as a URI.
 	//
@@ -64,6 +66,11 @@ type Details struct {
 	//
 	// See also https://datatracker.ietf.org/doc/html/rfc9457#name-extension-members
 	Extensions map[string]any
+
+	// Underlying optionally contains the underlying error that lead to / is described by this problem.
+	//
+	// This field is not part of RFC 9457 and is neither included in generated JSON nor populated during unmarshaling.
+	Underlying error
 }
 
 // Option defines functional options that can be used to fill in optional values when creating a [Details] via
@@ -111,6 +118,13 @@ func WithExtensions(extensions map[string]any) Option {
 	}
 }
 
+// WithUnderlying sets the given value as the underlying error of a new Details value.
+func WithUnderlying(err error) Option {
+	return func(d *Details) {
+		d.Underlying = err
+	}
+}
+
 // New returns a new Details instance using the given type, status and title.
 //
 // It is also possible to set the Detail and Instance fields as well as extensions by
@@ -136,6 +150,11 @@ var _ error = (*Details)(nil)
 // Error implements the error interface. The returned value is the same as d.Title.
 func (d *Details) Error() string {
 	return d.Title
+}
+
+// Unwrap implements the interface used functions like [errors.Is] and [errors.As] to get the underlying error, if any.
+func (d *Details) Unwrap() error {
+	return d.Underlying
 }
 
 // MarshalJSON implements the json.Marshaler interface.
