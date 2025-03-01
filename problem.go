@@ -398,6 +398,31 @@ type Type struct {
 	Extensions map[string]any
 }
 
+// Is returns true if the given error can be converted to a [*Details] using [errors.As] and the URI, Title and Status
+// match the given type.
+//
+// If any of [Type.URI], [Type.Title] or [Type.Status] is empty / zero, the field is skipped.
+//
+// For example, for a type with only a URI and no title or status, only the URI will be compared.
+func Is(err error, t *Type) bool {
+	var d *Details
+
+	if !errors.As(err, &d) {
+		return false
+	}
+
+	switch {
+	case t.URI != "" && t.URI != cmp.Or(d.Type, AboutBlankTypeURI):
+		return false
+	case t.Title != "" && t.Title != d.Title:
+		return false
+	case t.Status != 0 && t.Status != d.Status:
+		return false
+	default:
+		return true
+	}
+}
+
 // Details creates a new [Details] instance from this type.
 //
 // It is equivalent to calling New(p.URI, p.Status, p.Title, opts...).

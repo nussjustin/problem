@@ -430,6 +430,178 @@ func TestDetails_ServeHTTP(t *testing.T) {
 	})
 }
 
+func TestIs(t *testing.T) {
+	tests := []struct {
+		Name  string
+		Error error
+		Type  problem.Type
+		Want  bool
+	}{
+		{
+			Name:  "No error",
+			Error: nil,
+			Type:  problem.Type{},
+			Want:  false,
+		},
+
+		{
+			Name:  "Not details",
+			Error: io.EOF,
+			Type:  problem.Type{},
+			Want:  false,
+		},
+
+		{
+			Name:  "Empty type",
+			Error: &problem.Details{},
+			Type:  problem.Type{},
+			Want:  true,
+		},
+
+		{
+			Name: "Full type",
+			Error: &problem.Details{
+				Type:     "https://example.com/probs/out-of-credit",
+				Title:    "You do not have enough credit.",
+				Status:   http.StatusForbidden,
+				Detail:   "Your current balance is 30, but that costs 50.",
+				Instance: "/account/12345/msgs/abc",
+			},
+			Type: problem.Type{
+				URI:    "https://example.com/probs/out-of-credit",
+				Title:  "You do not have enough credit.",
+				Status: http.StatusForbidden,
+			},
+			Want: true,
+		},
+		{
+			Name: "Full type with extensions",
+			Error: &problem.Details{
+				Type:     "https://example.com/probs/out-of-credit",
+				Title:    "You do not have enough credit.",
+				Status:   http.StatusForbidden,
+				Detail:   "Your current balance is 30, but that costs 50.",
+				Instance: "/account/12345/msgs/abc",
+				Extensions: map[string]any{
+					"InDetails": true,
+				},
+			},
+			Type: problem.Type{
+				URI:    "https://example.com/probs/out-of-credit",
+				Title:  "You do not have enough credit.",
+				Status: http.StatusForbidden,
+				Extensions: map[string]any{
+					"InType": true,
+				},
+			},
+			Want: true,
+		},
+
+		{
+			Name: "Type with only URI",
+			Error: &problem.Details{
+				Type:     "https://example.com/probs/out-of-credit",
+				Title:    "You do not have enough credit.",
+				Status:   http.StatusForbidden,
+				Detail:   "Your current balance is 30, but that costs 50.",
+				Instance: "/account/12345/msgs/abc",
+			},
+			Type: problem.Type{
+				URI: "https://example.com/probs/out-of-credit",
+			},
+			Want: true,
+		},
+		{
+			Name: "Type with only title",
+			Error: &problem.Details{
+				Type:     "https://example.com/probs/out-of-credit",
+				Title:    "You do not have enough credit.",
+				Status:   http.StatusForbidden,
+				Detail:   "Your current balance is 30, but that costs 50.",
+				Instance: "/account/12345/msgs/abc",
+			},
+			Type: problem.Type{
+				Title: "You do not have enough credit.",
+			},
+			Want: true,
+		},
+		{
+			Name: "Type with only status",
+			Error: &problem.Details{
+				Type:     "https://example.com/probs/out-of-credit",
+				Title:    "You do not have enough credit.",
+				Status:   http.StatusForbidden,
+				Detail:   "Your current balance is 30, but that costs 50.",
+				Instance: "/account/12345/msgs/abc",
+			},
+			Type: problem.Type{
+				Status: http.StatusForbidden,
+			},
+			Want: true,
+		},
+
+		{
+			Name: "Type with mismatched URI",
+			Error: &problem.Details{
+				Type:     "https://example.com/probs/out-of-credit",
+				Title:    "You do not have enough credit.",
+				Status:   http.StatusForbidden,
+				Detail:   "Your current balance is 30, but that costs 50.",
+				Instance: "/account/12345/msgs/abc",
+			},
+			Type: problem.Type{
+				URI: "https://example.com/probs/out-of-motivation",
+			},
+			Want: false,
+		},
+		{
+			Name: "Type with mismatched title",
+			Error: &problem.Details{
+				Type:     "https://example.com/probs/out-of-credit",
+				Title:    "You do not have enough credit.",
+				Status:   http.StatusForbidden,
+				Detail:   "Your current balance is 30, but that costs 50.",
+				Instance: "/account/12345/msgs/abc",
+			},
+			Type: problem.Type{
+				Title: "You do not have enough motivation.",
+			},
+			Want: false,
+		},
+		{
+			Name: "Type with mismatched status",
+			Error: &problem.Details{
+				Type:     "https://example.com/probs/out-of-credit",
+				Title:    "You do not have enough credit.",
+				Status:   http.StatusForbidden,
+				Detail:   "Your current balance is 30, but that costs 50.",
+				Instance: "/account/12345/msgs/abc",
+			},
+			Type: problem.Type{
+				Status: http.StatusTeapot,
+			},
+			Want: false,
+		},
+
+		{
+			Name:  "Type with about:blank URI matches empty type",
+			Error: &problem.Details{},
+			Type: problem.Type{
+				URI: problem.AboutBlankTypeURI,
+			},
+			Want: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			if got := problem.Is(test.Error, &test.Type); got != test.Want {
+				t.Errorf("got %t, want %t", got, test.Want)
+			}
+		})
+	}
+}
+
 func TestType_Details(t *testing.T) {
 	got := (&problem.Type{
 		URI:    "https://example.com/probs/out-of-credit",
