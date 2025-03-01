@@ -149,6 +149,8 @@ func New(typ string, title string, status int, opts ...Option) *Details {
 
 // From returns the problem returned as part of the given HTTP response if any.
 //
+// As a special case, if [Details.Status] would be 0, it will instead be set to the response status code.
+//
 // If the response is not of type application/problem+json, this function returns nil, nil.
 func From(resp *http.Response) (*Details, error) {
 	ct := resp.Header.Get("Content-Type")
@@ -161,6 +163,10 @@ func From(resp *http.Response) (*Details, error) {
 
 	if err := json.UnmarshalRead(resp.Body, &d); err != nil {
 		return nil, err
+	}
+
+	if d.Status == 0 {
+		d.Status = resp.StatusCode
 	}
 
 	return &d, nil

@@ -212,10 +212,24 @@ func TestFrom(t *testing.T) {
 			Name: "Valid response with parameters in type",
 			Type: problem.ContentType + ";a=1;b=2",
 			Response: `{
+				"type": "https://example.com/probs/out-of-credit",
+				"status": 403
+			}`,
+			Want: &problem.Details{
+				Type:   "https://example.com/probs/out-of-credit",
+				Status: http.StatusForbidden,
+			},
+			WantError: false,
+		},
+		{
+			Name: "Valid response with no status",
+			Type: problem.ContentType + ";a=1;b=2",
+			Response: `{
 				"type": "https://example.com/probs/out-of-credit"
 			}`,
 			Want: &problem.Details{
-				Type: "https://example.com/probs/out-of-credit",
+				Type:   "https://example.com/probs/out-of-credit",
+				Status: http.StatusTeapot,
 			},
 			WantError: false,
 		},
@@ -224,6 +238,7 @@ func TestFrom(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			resp := &http.Response{Header: http.Header{}}
+			resp.StatusCode = http.StatusTeapot
 			resp.Header.Add("Content-Type", test.Type)
 			resp.Body = io.NopCloser(strings.NewReader(test.Response))
 
