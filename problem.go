@@ -6,8 +6,10 @@ package problem
 
 import (
 	"cmp"
+	"errors"
 	"maps"
 	"net/http"
+	"strings"
 
 	"github.com/go-json-experiment/json"
 	"github.com/go-json-experiment/json/jsontext"
@@ -143,6 +145,33 @@ func New(typ string, title string, status int, opts ...Option) *Details {
 	}
 
 	return p
+}
+
+// From returns the problem returned as part of the given HTTP response if any.
+//
+// If the response is not of type application/problem+json, this function returns nil, nil.
+func From(resp *http.Response) (*Details, error) {
+	ct := resp.Header.Get("Content-Type")
+
+	if !isContentType(ContentType, ct) {
+		return nil, nil
+	}
+
+	var d Details
+
+	if err := json.UnmarshalRead(resp.Body, &d); err != nil {
+		return nil, err
+	}
+
+	return &d, nil
+}
+
+func isContentType(expected, actual string) bool {
+	if !strings.HasPrefix(actual, expected) {
+		return false
+	}
+
+	return actual == expected || actual[len(expected)] == ';'
 }
 
 var _ error = (*Details)(nil)

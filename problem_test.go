@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -75,7 +77,7 @@ func assertResponse(tb testing.TB, rec *httptest.ResponseRecorder, wantStatus in
 	assertJSON(tb, wantJSON, rec.Body.Bytes())
 }
 
-func TestDetails_New(t *testing.T) {
+func TestNew(t *testing.T) {
 	tests := []struct {
 		Name     string
 		Opts     []problem.Option
@@ -144,6 +146,98 @@ func TestDetails_New(t *testing.T) {
 
 			if diff := cmp.Diff(&test.Expected, d); diff != "" {
 				t.Errorf("problem.New() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestFrom(t *testing.T) {
+	tests := []struct {
+		Name      string
+		Type      string
+		Response  string
+		Want      *problem.Details
+		WantError bool
+	}{
+		{
+			Name:      "No problem",
+			Type:      "application/json",
+			Response:  `ignored`,
+			Want:      nil,
+			WantError: false,
+		},
+
+		{
+			Name:      "Invalid content type",
+			Type:      "application/problem+xml",
+			Response:  `ignored`,
+			Want:      nil,
+			WantError: false,
+		},
+
+		{
+			Name:      "Invalid response",
+			Type:      problem.ContentType,
+			Response:  `invalid`,
+			Want:      nil,
+			WantError: true,
+		},
+
+		{
+			Name: "Valid response",
+			Type: problem.ContentType,
+			Response: `{
+				"type": "https://example.com/probs/out-of-credit",
+				"title": "You do not have enough credit.",
+				"status": 403,
+				"detail": "Your current balance is 30, but that costs 50.",
+				"instance": "/account/12345/msgs/abc",
+				"balance": 30,
+				"accounts": ["/account/12345", "/account/67890"]
+			}`,
+			Want: &problem.Details{
+				Type:     "https://example.com/probs/out-of-credit",
+				Title:    "You do not have enough credit.",
+				Status:   http.StatusForbidden,
+				Detail:   "Your current balance is 30, but that costs 50.",
+				Instance: "/account/12345/msgs/abc",
+				Extensions: map[string]any{
+					"balance":  30.0,
+					"accounts": []any{"/account/12345", "/account/67890"},
+				},
+			},
+			WantError: false,
+		},
+		{
+			Name: "Valid response with parameters in type",
+			Type: problem.ContentType + ";a=1;b=2",
+			Response: `{
+				"type": "https://example.com/probs/out-of-credit"
+			}`,
+			Want: &problem.Details{
+				Type: "https://example.com/probs/out-of-credit",
+			},
+			WantError: false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			resp := &http.Response{Header: http.Header{}}
+			resp.Header.Add("Content-Type", test.Type)
+			resp.Body = io.NopCloser(strings.NewReader(test.Response))
+
+			got, gotErr := problem.From(resp)
+
+			if diff := cmp.Diff(test.Want, got); diff != "" {
+				t.Errorf("From() mismatch (-want +got):\n%s", diff)
+			}
+
+			switch {
+			case gotErr != nil && !test.WantError:
+				t.Errorf("got error %v, want nil", gotErr)
+			case gotErr == nil && test.WantError:
+				t.Errorf("expected error not returned")
 			}
 		})
 	}
