@@ -194,18 +194,20 @@ func (d *Details) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d)
 }
 
+var _ json.MarshalerTo = (*Details)(nil)
+
 // MarshalJSONTo implements the json.MarshalerTo interface.
 //
 // If no Type is set, "about:blank" is used. See also [AboutBlankTypeURI].
 //
 // Extension fields named "type", "status", "title", "detail" or "instance" are ignored when marshaling in favor
 // of the respective struct fields even if the field is empty.
-func (d *Details) MarshalJSONTo(enc *jsontext.Encoder, opts json.Options) error {
+func (d *Details) MarshalJSONTo(enc *jsontext.Encoder) error {
 	// We implement marshalling ourselves so that we can put the defined fields and the extensions
 	// into a single JSON object.
 	//
 	// As a nice benefit this is also faster than using the default, reflection-based approach.
-	if err := enc.WriteToken(jsontext.ObjectStart); err != nil {
+	if err := enc.WriteToken(jsontext.BeginObject); err != nil {
 		return err
 	}
 
@@ -270,12 +272,12 @@ func (d *Details) MarshalJSONTo(enc *jsontext.Encoder, opts json.Options) error 
 			return err
 		}
 
-		if err := json.MarshalEncode(enc, v, opts); err != nil {
+		if err := json.MarshalEncode(enc, v); err != nil {
 			return err
 		}
 	}
 
-	if err := enc.WriteToken(jsontext.ObjectEnd); err != nil {
+	if err := enc.WriteToken(jsontext.EndObject); err != nil {
 		return err
 	}
 
@@ -290,16 +292,18 @@ func (d *Details) UnmarshalJSON(b []byte) error {
 	return json.Unmarshal(b, d)
 }
 
+var _ json.UnmarshalerFrom = (*Details)(nil)
+
 // UnmarshalJSONFrom implements the json.UnmarshalerFrom interface.
 //
 // As required by RFC 9457 UnmarshalJSONV2 will ignore values for known fields if those values have the wrong type.
 //
 // For example if the parsed JSON contains a field "status" with the code "400" as a JSON string, the field will be
 // ignored even if it may be possible to parse it as an integer.
-func (d *Details) UnmarshalJSONFrom(dec *jsontext.Decoder, opts json.Options) error {
+func (d *Details) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	var m map[string]any
 
-	if err := json.UnmarshalDecode(dec, &m, opts); err != nil {
+	if err := json.UnmarshalDecode(dec, &m); err != nil {
 		return err
 	}
 
