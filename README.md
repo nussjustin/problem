@@ -112,6 +112,53 @@ func main() {
 }
 ```
 
+### Handling problem responses as a client
+
+When making HTTP requests to a server that returns RFC 9457 compatible JSON responses, the [From][5] function can be
+used to extract these errors from the response.
+
+Example:
+
+```go
+resp, err := http.Get("https://example.com/")
+if err != nil {
+	panic(err)
+}
+
+defer func() {
+	_ = resp.Body.Close()
+}()
+
+if resp.StatusCode >= 400 {
+    details, err := problem.From(resp)
+    if err != nil {
+        // the error would not be parsed	
+        panic(err)
+    }
+    
+    if details == nil {
+        panic("no problem reported")	
+    }
+    
+    // ... handle the error
+}
+```
+
+The [Is][6] function can be used to check against and handle known problem types.
+
+Example:
+
+```go
+switch {
+case problem.Is(details, AccountLockedProblemType):
+	// handle locked account
+case problem.Is(details, OutOfCreditProblemType):
+    // handle out of credit
+default:
+	// handle unknown error
+}
+```
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
@@ -125,3 +172,5 @@ Please make sure to update tests as appropriate.
 [2]: https://pkg.go.dev/net/http#Handler
 [3]: https://pkg.go.dev/github.com/nussjustin/problem#Details
 [4]: https://pkg.go.dev/github.com/nussjustin/problem#Handler
+[5]: https://pkg.go.dev/github.com/nussjustin/problem#From
+[6]: https://pkg.go.dev/github.com/nussjustin/problem#Is
