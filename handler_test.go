@@ -11,7 +11,7 @@ import (
 )
 
 func textHandler(text string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 
 		_, _ = io.WriteString(w, text)
@@ -19,7 +19,7 @@ func textHandler(text string) http.HandlerFunc {
 }
 
 func panicHandler(v any) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(http.ResponseWriter, *http.Request) {
 		panic(v)
 	}
 }
