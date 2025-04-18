@@ -151,13 +151,19 @@ func New(typ string, title string, status int, opts ...Option) *Details {
 //
 // As a special case, if [Details.Status] would be 0, it will instead be set to the response status code.
 //
-// If the response is not of type application/problem+json, this function returns nil, nil.
+// The response body will be closed automatically.
+//
+// If the response is not of type application/problem+json, the function returns nil, nil and does not close the body.
 func From(resp *http.Response) (*Details, error) {
 	ct := resp.Header.Get("Content-Type")
 
 	if !isContentType(ContentType, ct) {
 		return nil, nil
 	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	var d Details
 

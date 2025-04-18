@@ -151,13 +151,24 @@ func TestNew(t *testing.T) {
 	}
 }
 
+type readCloser struct {
+	io.Reader
+	closed bool
+}
+
+func (rc *readCloser) Close() error {
+	rc.closed = true
+	return nil
+}
+
 func TestFrom(t *testing.T) {
 	tests := []struct {
-		Name      string
-		Type      string
-		Response  string
-		Want      *problem.Details
-		WantError bool
+		Name           string
+		Type           string
+		Response       string
+		Want           *problem.Details
+		WantBodyClosed bool
+		WantError      bool
 	}{
 		{
 			Name:      "No problem",
@@ -176,11 +187,12 @@ func TestFrom(t *testing.T) {
 		},
 
 		{
-			Name:      "Invalid response",
-			Type:      problem.ContentType,
-			Response:  `invalid`,
-			Want:      nil,
-			WantError: true,
+			Name:           "Invalid response",
+			Type:           problem.ContentType,
+			Response:       `invalid`,
+			Want:           nil,
+			WantBodyClosed: true,
+			WantError:      true,
 		},
 
 		{
@@ -206,7 +218,8 @@ func TestFrom(t *testing.T) {
 					"accounts": []any{"/account/12345", "/account/67890"},
 				},
 			},
-			WantError: false,
+			WantBodyClosed: true,
+			WantError:      false,
 		},
 		{
 			Name: "Valid response with parameters in type",
@@ -219,7 +232,8 @@ func TestFrom(t *testing.T) {
 				Type:   "https://example.com/probs/out-of-credit",
 				Status: http.StatusForbidden,
 			},
-			WantError: false,
+			WantBodyClosed: true,
+			WantError:      false,
 		},
 		{
 			Name: "Valid response with no status",
@@ -231,16 +245,19 @@ func TestFrom(t *testing.T) {
 				Type:   "https://example.com/probs/out-of-credit",
 				Status: http.StatusTeapot,
 			},
-			WantError: false,
+			WantBodyClosed: true,
+			WantError:      false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
+			body := &readCloser{Reader: strings.NewReader(test.Response)}
+
 			resp := &http.Response{Header: http.Header{}}
 			resp.StatusCode = http.StatusTeapot
 			resp.Header.Add("Content-Type", test.Type)
-			resp.Body = io.NopCloser(strings.NewReader(test.Response))
+			resp.Body = body
 
 			got, gotErr := problem.From(resp)
 
@@ -253,6 +270,13 @@ func TestFrom(t *testing.T) {
 				t.Errorf("got error %v, want nil", gotErr)
 			case gotErr == nil && test.WantError:
 				t.Errorf("expected error not returned")
+			}
+
+			switch {
+			case test.WantBodyClosed && !body.closed:
+				t.Error("body was not closed")
+			case !test.WantBodyClosed && body.closed:
+				t.Error("body was closed unexpectedly")
 			}
 		})
 	}
