@@ -19,7 +19,7 @@ literal or using the global [New][1] function.
 Example using a struct literal:
 
 ```go
-var OutOfCreditProblemType = &problem.Type{
+var OutOfCreditProblemType = &problem.Details{
     Type:     "https://example.com/probs/out-of-credit",
     Title:    "You do not have enough credit.",
     Status:   http.StatusForbidden,
