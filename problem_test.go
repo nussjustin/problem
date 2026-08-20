@@ -483,7 +483,7 @@ func TestDetails_UnmarshalJSON(t *testing.T) {
 
 func TestDetails_ServeHTTP(t *testing.T) {
 	t.Run("Panic", func(t *testing.T) {
-		r := httptest.NewRequest("GET", "/account/12345/msgs/abc", nil)
+		r := httptest.NewRequestWithContext(t.Context(), "GET", "/account/12345/msgs/abc", nil)
 
 		rec := httptest.NewRecorder()
 		rec.Header().Set("Content-Length", "1337")
@@ -509,7 +509,7 @@ func TestDetails_ServeHTTP(t *testing.T) {
 	})
 
 	t.Run("Minimal details", func(t *testing.T) {
-		r := httptest.NewRequest("GET", "/account/12345/msgs/abc", nil)
+		r := httptest.NewRequestWithContext(t.Context(), "GET", "/account/12345/msgs/abc", nil)
 
 		rec := httptest.NewRecorder()
 		rec.Header().Set("Content-Length", "1337")
@@ -533,7 +533,7 @@ func TestDetails_ServeHTTP(t *testing.T) {
 	})
 
 	t.Run("Full details", func(t *testing.T) {
-		r := httptest.NewRequest("GET", "/account/12345/msgs/abc", nil)
+		r := httptest.NewRequestWithContext(t.Context(), "GET", "/account/12345/msgs/abc", nil)
 
 		rec := httptest.NewRecorder()
 		rec.Header().Set("Content-Length", "1337")
