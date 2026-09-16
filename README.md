@@ -4,11 +4,6 @@
 
 This module provides an API for the [RFC 9457][0] problem details specification in Go.
 
-> [!WARNING]  
-> This module depends on the experimental github.com/go-json-experiment/json package.
-> This package is planned to become part of the Go standard library in form of a future json/v2 package.
-> Once that happens this module will be updated to use the new json/v2 package from the standard library instead.
-
 ## Examples
 
 ### Using problem details
@@ -19,7 +14,7 @@ literal or using the global [New][1] function.
 Example using a struct literal:
 
 ```go
-var OutOfCreditProblemType = &problem.Details{
+var OutOfCreditProblem = &problem.Details{
     Type:     "https://example.com/probs/out-of-credit",
     Title:    "You do not have enough credit.",
     Status:   http.StatusForbidden,
